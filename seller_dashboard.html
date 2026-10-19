@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1200, initial-scale=0.35, maximum-scale=3.0, user-scalable=yes">
+    <title>Order kAU | Canteen Staff Portal</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="./style.css?v=2.0">
+    <style>
+        .seller-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #FFD43B;
+            color: #102A83;
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 999;
+            animation: appear 0.3s ease;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="seller-toast" id="sellerToast"></div>
+
+    <header class="navbar">
+        <div class="logo-group">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/PHINMA_Araullo_University_Logo.png/756px-PHINMA_Araullo_University_Logo.png" alt="PHINMA AU Crest" style="width:40px; height:40px; object-fit:contain;">
+            <span class="brand-title">CANTEEN SELLER PORTAL</span>
+        </div>
+        <div class="nav-controls">
+            <button class="btn-logout" id="logoutBtn">Log Out</button>
+        </div>
+    </header>
+
+    <main class="main-container">
+
+        <div style="color: #FFFFFF; margin-bottom: 20px;">
+            <h2 style="font-size: 24px; font-weight: 800;">Active Student Orders</h2>
+            <p style="color: rgba(255, 255, 255, 0.8); font-size: 13px;">
+                Manage kitchen preparation and mark orders ready for pickup.
+            </p>
+        </div>
+
+        <div class="orders-table-container">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Student Email</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="sellerOrdersTable"></tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <footer>
+        &copy; PHINMA Araullo University
+        <br> Order kAU | Canteen Management
+    </footer>
+
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem('orderkAUUser'));
+        if (!currentUser || currentUser.role !== 'seller') {
+            alert('Access restricted to canteen staff only.');
+            window.location.href = 'index.html';
+        }
+
+        const tableBody = document.getElementById('sellerOrdersTable');
+        const sellerToast = document.getElementById('sellerToast');
+        let knownOrderCount = 0;
+
+        function showNotification(msg) {
+            sellerToast.textContent = msg;
+            sellerToast.style.display = 'block';
+            setTimeout(() => {
+                sellerToast.style.display = 'none';
+            }, 5000);
+        }
+
+        function loadOrders() {
+            const orders = JSON.parse(localStorage.getItem('kAUOrders')) || [];
+            
+            if (knownOrderCount > 0 && orders.length > knownOrderCount) {
+                const latestOrder = orders[0];
+                showNotification(`🔔 NEW ORDER: ${latestOrder.id} from ${latestOrder.studentEmail}!`);
+            }
+            knownOrderCount = orders.length;
+
+            tableBody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding: 30px; color: var(--muted);">
+                            No incoming orders yet.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            orders.forEach((ord, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${ord.id}</strong></td>
+                    <td>${ord.studentEmail}</td>
+                    <td>${ord.items}</td>
+                    <td><strong>${ord.total}</strong></td>
+                    <td>${ord.payment}</td>
+                    <td>
+                        <span class="status-badge ${ord.status.toLowerCase().replace(/\s+/g, '-')}">${ord.status}</span>
+                    </td>
+                    <td>
+                        ${ord.status === 'Preparing' ? `
+                            <button class="btn-action-small" onclick="updateOrderStatus(${index}, 'Ready for Pickup')">
+                                Mark Ready
+                            </button>
+                        ` : ord.status === 'Ready for Pickup' ? `
+                            <button class="btn-action-small completed" onclick="updateOrderStatus(${index}, 'Completed')">
+                                Complete
+                            </button>
+                        ` : `
+                            <span style="font-size:11px; color:#A0AAB8;">Done</span>
+                        `}
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function updateOrderStatus(index, newStatus) {
+            const orders = JSON.parse(localStorage.getItem('kAUOrders')) || [];
+            orders[index].status = newStatus;
+            localStorage.setItem('kAUOrders', JSON.stringify(orders));
+            
+            if (newStatus === 'Ready for Pickup') {
+                showNotification(`📢 Order ${orders[index].id} marked as READY FOR PICKUP! Student notified.`);
+            }
+
+            loadOrders();
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('orderkAUUser');
+            window.location.href = 'index.html';
+        });
+
+        loadOrders();
+        setInterval(loadOrders, 2000);
+    </script>
+
+</body>
+
+</html>

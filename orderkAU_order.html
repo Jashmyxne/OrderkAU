@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1200, initial-scale=0.35, maximum-scale=3.0, user-scalable=yes">
+    <title>Order kAU | Student Portal</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="./style.css?v=2.0">
+    <style>
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-logo-img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        .brand-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #FFFFFF;
+            letter-spacing: 0.5px;
+        }
+        .student-notification-banner {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2457D6;
+            color: #FFFFFF;
+            border: 2px solid #FFD43B;
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            display: none;
+            z-index: 999;
+            animation: appear 0.3s ease;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="student-notification-banner" id="studentNotifBanner"></div>
+
+    <header class="navbar">
+        <div class="logo-group">
+            <img src="https://i.pinimg.com/736x/61/86/80/6186807959022bcb20a529cde85fff94.jpg" alt="PHINMA AU Crest" class="header-logo-img">
+            <span class="brand-title">ORDER kAU</span>
+        </div>
+        <div class="nav-controls">
+            <button class="btn-profile" id="openProfileBtn">👤 Profile</button>
+            <button class="btn-cart" id="openCartBtn">🛒 Cart ( <span id="cartCount">0</span> )</button>
+            <button class="btn-logout" id="logoutBtn">Log Out</button>
+        </div>
+    </header>
+
+    <main class="main-container">
+
+        <!-- Category Filters -->
+        <div class="category-filters">
+            <button class="filter-btn active" data-category="all">All Items</button>
+            <button class="filter-btn" data-category="rice-meals">Rice Meals</button>
+            <button class="filter-btn" data-category="snacks">Snacks</button>
+            <button class="filter-btn" data-category="drinks">Drinks</button>
+        </div>
+
+        <!-- Food Menu Grid -->
+        <div class="menu-grid" id="menuGrid"></div>
+
+    </main>
+
+    <!-- Overlay Backdrop -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+
+    <!-- 1. Customize & Add-ons Modal -->
+    <div class="modal" id="addonModal">
+        <div class="modal-header">
+            <h3 id="addonFoodTitle">Customize Order</h3>
+            <button class="close-btn" id="closeAddonBtn">&times;</button>
+        </div>
+        <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">Select additional sides or drinks for your meal:</p>
+
+        <div class="addons-list">
+            <label class="addon-option">
+                <input type="checkbox" value="Extra Garlic Rice" data-price="15">
+                <div class="addon-info">
+                    <span>Extra Garlic Rice</span>
+                    <span class="addon-price">+₱15.00</span>
+                </div>
+            </label>
+            <label class="addon-option">
+                <input type="checkbox" value="Extra Fried Egg" data-price="12">
+                <div class="addon-info">
+                    <span>Extra Fried Egg</span>
+                    <span class="addon-price">+₱12.00</span>
+                </div>
+            </label>
+            <label class="addon-option">
+                <input type="checkbox" value="Add Iced Coffee" data-price="35">
+                <div class="addon-info">
+                    <span>Add Iced Coffee</span>
+                    <span class="addon-price">+₱35.00</span>
+                </div>
+            </label>
+            <label class="addon-option">
+                <input type="checkbox" value="Add Bottled Water" data-price="15">
+                <div class="addon-info">
+                    <span>Add Bottled Water</span>
+                    <span class="addon-price">+₱15.00</span>
+                </div>
+            </label>
+        </div>
+
+        <button class="btn-action" id="confirmAddonBtn">Add to Cart</button>
+    </div>
+
+    <!-- 2. Cart Modal -->
+    <div class="modal" id="cartModal">
+        <div class="modal-header">
+            <h3>Your Order Cart</h3>
+            <button class="close-btn" id="closeCartBtn">&times;</button>
+        </div>
+        <div class="cart-items-list" id="cartItemsList"></div>
+        <div class="cart-total-section">
+            <span>Total:</span>
+            <span id="cartTotal">₱0.00</span>
+        </div>
+        <button class="btn-action" id="proceedCheckoutBtn">Proceed to Checkout</button>
+    </div>
+
+    <!-- 3. Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-header">
+            <h3>Checkout Order</h3>
+            <button class="close-btn" id="closeCheckoutBtn">&times;</button>
+        </div>
+        <div class="checkout-form-group">
+            <label for="paymentMethod">Payment Method</label>
+            <select id="paymentMethod" class="checkout-select">
+                <option value="Cash on Pickup (Canteen Counter)">Cash on Pickup (Canteen Counter)</option>
+                <option value="GCash Mobile Wallet">GCash Mobile Wallet</option>
+            </select>
+        </div>
+        <button class="btn-action" id="confirmOrderBtn">Confirm Order</button>
+    </div>
+
+    <!-- 4. Order Placed Modal -->
+    <div class="modal text-center" id="successModal">
+        <h2 class="success-title">Order Placed Successfully! 🎉</h2>
+        <p class="success-subtitle">Present your Order Number at the canteen counter upon pickup.</p>
+        
+        <div class="order-number-card">
+            <span class="order-number-label">Order Number:</span>
+            <div class="order-number-val" id="orderNumDisplay">#ORD-0000</div>
+            <div class="order-status">Status: Preparing...</div>
+        </div>
+
+        <button class="btn-action" id="backToMenuBtn">Back to Menu</button>
+    </div>
+
+    <!-- 5. Student Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-header">
+            <h3>Student Profile</h3>
+            <button class="close-btn" id="closeProfileBtn">&times;</button>
+        </div>
+        
+        <div class="profile-card">
+            <div class="profile-avatar">🎓</div>
+            <div class="profile-info">
+                <h4 id="profileName" style="text-transform: capitalize;">Student Name</h4>
+                <p id="profileEmail">student@phinmaed.com</p>
+                <span class="badge-student">PHINMA Student</span>
+            </div>
+        </div>
+
+        <h4 style="margin: 18px 0 10px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">
+            My Recent Orders
+        </h4>
+
+        <div class="student-order-history" id="studentOrderHistory"></div>
+    </div>
+
+    <footer>
+        &copy; PHINMA Araullo University
+        <br> Order kAU | All Rights Reserved
+    </footer>
+
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem('orderkAUUser'));
+        if (!currentUser) window.location.href = 'index.html';
+
+        const menuItems = [
+            // RICE MEALS
+            { id: 1, name: "Chicken Silog", category: "rice-meals", desc: "Crispy fried chicken with garlic rice & egg", price: 65.00, img: "https://i.pinimg.com/1200x/ea/66/74/ea66746ddb4c37dbac9a445cfd03bea5.jpg" },
+            { id: 2, name: "Pork Sisig w/ Rice", category: "rice-meals", desc: "Sizzling pork sisig served with rice", price: 75.00, img: "https://i.pinimg.com/1200x/1a/80/23/1a802393fcd54993ce8d22926ec20306.jpg" },
+            { id: 3, name: "Burger Steak", category: "rice-meals", desc: "Beef patties with mushroom gravy & rice", price: 60.00, img: "https://i.pinimg.com/1200x/77/b6/70/77b67034c99d534b6f4d2e98239879d3.jpg" },
+            { id: 4, name: "Tocilog", category: "rice-meals", desc: "Sweet pork tocino with garlic rice & egg", price: 55.00, img: "https://i.pinimg.com/736x/0e/b1/c1/0eb1c121fdba0a311159be9dace973ce.jpg" },
+            { id: 5, name: "Hot Silog", category: "rice-meals", desc: "Red hotdogs with garlic rice & fried egg", price: 45.00, img: "https://i.pinimg.com/1200x/be/c4/8e/bec48eb4c586b4865f37f2367e1266d2.jpg" },
+
+            // SNACKS
+            { id: 6, name: "Cheese Sticks (5pcs)", category: "snacks", desc: "Crispy fried cheese rolls", price: 30.00, img: "https://i.pinimg.com/1200x/06/3f/7f/063f7fa44ecefcd232a5004ac5ab0987.jpg" },
+            { id: 7, name: "French Fries", category: "snacks", desc: "Loaded french fries with cheese & bacon", price: 35.00, img: "https://i.pinimg.com/1200x/db/bd/a5/dbbda53033e03f76810a4c32aae3a326.jpg" },
+            { id: 8, name: "Chicken Poppers", category: "snacks", desc: "Crispy bite-sized chicken in rice bowl", price: 60.00, img: "https://i.pinimg.com/1200x/38/e5/75/38e5753a5c85421b4dd7ca3ccfc489fd.jpg" },
+            { id: 9, name: "Buldak Ramen ",category: "snacks", desc: "Spicy Korean-style ramen", price: 25.00, img: "https://i.pinimg.com/736x/0e/8d/da/0e8dda1dd029b644f270c5660c39086c.jpg" },
+
+            // DRINKS
+            { id: 10, name: "Iced Choco", category: "drinks", desc: "Chilled cocoa milk drink in cup", price: 40.00, img: "https://i.pinimg.com/736x/2e/16/1d/2e161df2587bbcf1894ec24e579b8385.jpg" },
+            { id: 11, name: "Iced Coffee", category: "drinks", desc: "Cold brewed coffee with milk in cup", price: 35.00, img: "https://i.pinimg.com/1200x/ed/29/f0/ed29f0f79fced3231068780c5a89b129.jpg" },
+            { id: 12, name: "Bottled Water", category: "drinks", desc: "Purified drinking water bottle", price: 15.00, img: "https://i.pinimg.com/736x/fd/ba/f2/fdbaf28248587f3d540677ead57a4646.jpg" },
+            { id: 13, name: "Coke", category: "drinks", desc: "Ice-cold Coca-Cola served in glass", price: 20.00, img: "https://i.pinimg.com/736x/88/ae/1d/88ae1dfe531acd4cb3caafdb267bb5c1.jpg" },
+            { id: 14, name: "Sprite", category: "drinks", desc: "Crisp lemon-lime soda served with ice", price: 20.00, img: "https://i.pinimg.com/736x/b9/1c/c2/b91cc2bcd64552174ec94348dcf904aa.jpg" },
+            { id: 15, name: "Matcha", category: "drinks", desc: "Refreshing matcha green tea latte served cold", price: 45.00, img: "https://i.pinimg.com/736x/dc/c9/ce/dcc9cece545e7f612d6ad61fd4f3f552.jpg" }
+        ];
+
+        let cart = [];
+        let selectedItemForAddon = null;
+        let trackedReadyOrders = new Set();
+
+        const menuGrid = document.getElementById('menuGrid');
+        const cartCount = document.getElementById('cartCount');
+        const cartItemsList = document.getElementById('cartItemsList');
+        const cartTotal = document.getElementById('cartTotal');
+        const studentNotifBanner = document.getElementById('studentNotifBanner');
+        
+        const modalOverlay = document.getElementById('modalOverlay');
+        const addonModal = document.getElementById('addonModal');
+        const cartModal = document.getElementById('cartModal');
+        const checkoutModal = document.getElementById('checkoutModal');
+        const successModal = document.getElementById('successModal');
+        const profileModal = document.getElementById('profileModal');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderMenu('all');
+            setupEventListeners();
+            loadProfileDetails();
+            checkReadyOrders();
+            setInterval(checkReadyOrders, 2000);
+        });
+
+        function showStudentNotification(message) {
+            studentNotifBanner.textContent = message;
+            studentNotifBanner.style.display = 'block';
+            setTimeout(() => {
+                studentNotifBanner.style.display = 'none';
+            }, 6000);
+        }
+
+        function checkReadyOrders() {
+            const globalOrders = JSON.parse(localStorage.getItem('kAUOrders')) || [];
+            const myOrders = globalOrders.filter(o => o.studentEmail === currentUser.email);
+
+            myOrders.forEach(ord => {
+                if (ord.status === 'Ready for Pickup' && !trackedReadyOrders.has(ord.id)) {
+                    trackedReadyOrders.add(ord.id);
+                    showStudentNotification(`🎉 ORDER READY! Your order ${ord.id} is now ready for pickup at the counter!`);
+                }
+            });
+        }
+
+        function loadProfileDetails() {
+            document.getElementById('profileEmail').textContent = currentUser.email;
+            document.getElementById('profileName').textContent = currentUser.name || 'PHINMA Student';
+        }
+
+        function renderStudentHistory() {
+            const globalOrders = JSON.parse(localStorage.getItem('kAUOrders')) || [];
+            const myOrders = globalOrders.filter(o => o.studentEmail === currentUser.email);
+            const historyContainer = document.getElementById('studentOrderHistory');
+
+            historyContainer.innerHTML = '';
+            if (myOrders.length === 0) {
+                historyContainer.innerHTML = '<p style="color: var(--muted); font-size: 12px; text-align: center; padding: 10px;">No order history found.</p>';
+                return;
+            }
+
+            myOrders.forEach(ord => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <div>
+                        <strong style="color:#FFF;">${ord.id}</strong> - <span style="color:#2457D6;">${ord.total}</span>
+                        <div style="font-size: 11px; color:#A0AAB8;">${ord.items}</div>
+                    </div>
+                    <span class="status-badge ${ord.status.toLowerCase().replace(/\s+/g, '-')}">${ord.status}</span>
+                `;
+                historyContainer.appendChild(item);
+            });
+        }
+
+        function renderMenu(category) {
+            menuGrid.innerHTML = '';
+            const filtered = category === 'all' ? menuItems : menuItems.filter(item => item.category === category);
+            
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'food-card';
+                card.onclick = () => openAddonModal(item.id);
+                card.innerHTML = `
+                    <div class="food-img-container">
+                        <img src="${item.img}" alt="${item.name}">
+                    </div>
+                    <div class="food-info">
+                        <h4>${item.name}</h4>
+                        <p class="food-desc">${item.desc}</p>
+                        <div class="food-footer">
+                            <span class="price">₱${item.price.toFixed(2)}</span>
+                            <button class="btn-add" onclick="event.stopPropagation(); openAddonModal(${item.id})">+ Add</button>
+                        </div>
+                    </div>
+                `;
+                menuGrid.appendChild(card);
+            });
+        }
+
+        function openAddonModal(id) {
+            selectedItemForAddon = menuItems.find(i => i.id === id);
+            document.getElementById('addonFoodTitle').textContent = `Customize ${selectedItemForAddon.name}`;
+            document.querySelectorAll('#addonModal input[type="checkbox"]').forEach(cb => cb.checked = false);
+            openModal(addonModal);
+        }
+
+        document.getElementById('confirmAddonBtn').addEventListener('click', () => {
+            if (!selectedItemForAddon) return;
+
+            let finalName = selectedItemForAddon.name;
+            let finalPrice = selectedItemForAddon.price;
+            let chosenAddons = [];
+
+            document.querySelectorAll('#addonModal input[type="checkbox"]:checked').forEach(cb => {
+                chosenAddons.push(cb.value);
+                finalPrice += parseFloat(cb.getAttribute('data-price'));
+            });
+
+            if (chosenAddons.length > 0) {
+                finalName += ` (${chosenAddons.join(', ')})`;
+            }
+
+            const existing = cart.find(item => item.name === finalName);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ id: Date.now(), name: finalName, price: finalPrice, qty: 1 });
+            }
+
+            closeModal(addonModal);
+            updateCartUI();
+        });
+
+        function updateQty(id, change) {
+            const item = cart.find(i => i.id === id);
+            if (item) {
+                item.qty += change;
+                if (item.qty <= 0) {
+                    cart = cart.filter(i => i.id !== id);
+                }
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            cartCount.textContent = totalItems;
+
+            cartItemsList.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                cartItemsList.innerHTML = '<p style="text-align:center; color: var(--muted); padding: 20px 0;">Your cart is empty.</p>';
+            } else {
+                cart.forEach(item => {
+                    total += item.price * item.qty;
+                    const itemRow = document.createElement('div');
+                    itemRow.className = 'cart-item';
+                    itemRow.innerHTML = `
+                        <div>
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-price">₱${item.price.toFixed(2)} each</div>
+                        </div>
+                        <div class="cart-qty-controls">
+                            <button class="qty-btn" onclick="updateQty(${item.id}, -1)">-</button>
+                            <span class="qty-val">${item.qty}</span>
+                            <button class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
+                        </div>
+                    `;
+                    cartItemsList.appendChild(itemRow);
+                });
+            }
+
+            cartTotal.textContent = `₱${total.toFixed(2)}`;
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    renderMenu(e.target.getAttribute('data-category'));
+                });
+            });
+
+            document.getElementById('openCartBtn').addEventListener('click', () => openModal(cartModal));
+            document.getElementById('closeCartBtn').addEventListener('click', () => closeModal(cartModal));
+            document.getElementById('closeAddonBtn').addEventListener('click', () => closeModal(addonModal));
+
+            document.getElementById('openProfileBtn').addEventListener('click', () => {
+                renderStudentHistory();
+                openModal(profileModal);
+            });
+            document.getElementById('closeProfileBtn').addEventListener('click', () => closeModal(profileModal));
+
+            document.getElementById('proceedCheckoutBtn').addEventListener('click', () => {
+                if (cart.length === 0) {
+                    alert("Your cart is empty!");
+                    return;
+                }
+                closeModal(cartModal);
+                openModal(checkoutModal);
+            });
+
+            document.getElementById('closeCheckoutBtn').addEventListener('click', () => closeModal(checkoutModal));
+
+            document.getElementById('confirmOrderBtn').addEventListener('click', () => {
+                closeModal(checkoutModal);
+                
+                const randomNum = `#ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+                const paymentMethod = document.getElementById('paymentMethod').value;
+                const totalAmount = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+
+                const newOrder = {
+                    id: randomNum,
+                    studentEmail: currentUser.email,
+                    items: cart.map(i => `${i.qty}x ${i.name}`).join(', '),
+                    total: `₱${totalAmount.toFixed(2)}`,
+                    payment: paymentMethod,
+                    status: 'Preparing'
+                };
+
+                const globalOrders = JSON.parse(localStorage.getItem('kAUOrders')) || [];
+                globalOrders.unshift(newOrder);
+                localStorage.setItem('kAUOrders', JSON.stringify(globalOrders));
+
+                document.getElementById('orderNumDisplay').textContent = randomNum;
+                openModal(successModal);
+                
+                cart = [];
+                updateCartUI();
+            });
+
+            document.getElementById('backToMenuBtn').addEventListener('click', () => closeModal(successModal));
+            modalOverlay.addEventListener('click', closeAllModals);
+
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('orderkAUUser');
+                window.location.href = 'index.html';
+            });
+        }
+
+        function openModal(modal) {
+            modalOverlay.classList.add('active');
+            modal.classList.add('active');
+        }
+
+        function closeModal(modal) {
+            modal.classList.remove('active');
+            modalOverlay.classList.remove('active');
+        }
+
+        function closeAllModals() {
+            modalOverlay.classList.remove('active');
+            cartModal.classList.remove('active');
+            checkoutModal.classList.remove('active');
+            successModal.classList.remove('active');
+            profileModal.classList.remove('active');
+            addonModal.classList.remove('active');
+        }
+    </script>
+
+</body>
+
+</html>
